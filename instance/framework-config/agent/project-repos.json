@@ -173,6 +173,22 @@
     "url": "https://github.com/platex-rehor-bot/cypress-e2e-image.git",
     "upstream": "https://github.com/RedHatInsights/cypress-e2e-image.git"
   },
+  "insights-common-typescript": {
+    "url": "https://github.com/platex-rehor-bot/insights-common-typescript.git",
+    "upstream": "https://github.com/RedHatInsights/insights-common-typescript.git"
+  },
+  "access-requests-frontend": {
+    "url": "https://github.com/platex-rehor-bot/access-requests-frontend.git",
+    "upstream": "https://github.com/RedHatInsights/access-requests-frontend.git"
+  },
+  "landing-page-frontend": {
+    "url": "https://github.com/platex-rehor-bot/landing-page-frontend.git",
+    "upstream": "https://github.com/RedHatInsights/landing-page-frontend.git"
+  },
+  "sources-ui": {
+    "url": "https://github.com/platex-rehor-bot/sources-ui.git",
+    "upstream": "https://github.com/RedHatInsights/sources-ui.git"
+  },
   "scalprum/scaffolding": {
     "url": "https://github.com/platex-rehor-bot/scaffolding.git",
     "upstream": "https://github.com/scalprum/scaffolding.git"
