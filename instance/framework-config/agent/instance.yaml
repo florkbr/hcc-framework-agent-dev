@@ -1,6 +1,11 @@
 workflow: jira-sprint
 source: jira
 envs:
+  - node
+  - go
+  - patternfly-mcp
   - slack
   - container-scan
   - browser
+claude_md:
+  strategy: append
