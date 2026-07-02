@@ -7,7 +7,7 @@ parameters:
   value: ${NAMESPACE}
 - name: BOT_IMAGE
   value: quay.io/redhat-services-prod/hcc-platex-services/hcc-framework-agent-dev
-- name: BOT_IMAGE_TAG
+- name: IMAGE_TAG
   required: true
 - name: BOT_LABEL
   value: hcc-ai-bot
@@ -75,7 +75,7 @@ objects:
       spec:
         containers:
         - name: bot
-          image: ${BOT_IMAGE}:${BOT_IMAGE_TAG}
+          image: ${BOT_IMAGE}:${IMAGE_TAG}
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
@@ -186,11 +186,11 @@ objects:
           resources:
             requests:
               cpu: "1"
-              memory: 2Gi
+              memory: 4Gi
               ephemeral-storage: 4Gi
             limits:
               cpu: "4"
-              memory: 4Gi
+              memory: 6Gi
               ephemeral-storage: 8Gi
 
 # --- NetworkPolicy: Bot can only reach proxy + memory-server ---

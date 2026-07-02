@@ -34,3 +34,9 @@ Pre-installed: Go 1.24.2 (default), 1.25.7. Available globally via `/usr/local/b
 - `go.mod` says `go 1.23` → `goenv install 1.23.x && goenv local 1.23.x`
 - `.nvmrc` says `20` → `nvm use 20` (installs automatically if missing)
 - No version file → use the defaults
+
+## Node.js
+
+Do no run tasks like lint, build, tests and others in paraller, they are memory intensive and can kill your env. Run then in sequence.
+Even things like jest, try to run them in band to reduce the memory usage.
+
