@@ -7,7 +7,15 @@ parameters:
   value: ${NAMESPACE}
 - name: BOT_IMAGE
   value: quay.io/redhat-services-prod/hcc-platex-services/hcc-framework-agent-dev
+# REGISTRY_IMG + IMAGE_TAG are the exact parameter names app-interface's
+# openshift-saas-deploy looks for to auto-resolve IMAGE_DIGEST from Quay at
+# deploy time (see continuous-delivery-in-app-interface.md, "Automatically
+# generated parameters"). Keep this in sync with BOT_IMAGE.
+- name: REGISTRY_IMG
+  value: quay.io/redhat-services-prod/hcc-platex-services/hcc-framework-agent-dev
 - name: IMAGE_TAG
+  required: true
+- name: IMAGE_DIGEST
   required: true
 - name: BOT_LABEL
   value: hcc-ai-bot
@@ -85,7 +93,7 @@ objects:
       spec:
         containers:
         - name: bot
-          image: ${BOT_IMAGE}:${IMAGE_TAG}
+          image: ${BOT_IMAGE}@${IMAGE_DIGEST}
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false

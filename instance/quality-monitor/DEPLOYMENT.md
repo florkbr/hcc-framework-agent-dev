@@ -8,8 +8,14 @@ The quality-monitor instance uses the existing `deploy/template.yaml` with speci
 
 - PR merged to `RedHatInsights/hcc-framework-agent-dev:master`
 - Konflux has rebuilt the image
-- Image SHA available from Quay: `quay.io/redhat-services-prod/hcc-platex-services/hcc-framework-agent-dev`
 - Access to app-interface repository
+
+`IMAGE_DIGEST` does not need to be looked up manually — app-interface's
+`openshift-saas-deploy` auto-resolves it from Quay at deploy time (via the
+template's `REGISTRY_IMG`/`IMAGE_TAG` parameters), the same way it already
+auto-resolves `IMAGE_TAG` from the git ref today. Leave it unset in the
+target's `parameters` unless you're intentionally pinning to a specific
+historical build.
 
 ## App-Interface Configuration
 
@@ -33,7 +39,8 @@ resourceTemplates:
           $ref: /services/insights/platform-frontend-ai-dev/namespaces/stage.hcmais01ue1.yml
         ref: <COMMIT_SHA>  # SHA from merged PR
         parameters:
-          IMAGE_TAG: <COMMIT_SHA>
+          # IMAGE_DIGEST intentionally omitted — auto-resolved by app-interface
+          # from REGISTRY_IMG/IMAGE_TAG (template defaults) at deploy time.
           BOT_IMAGE: quay.io/redhat-services-prod/hcc-platex-services/hcc-framework-agent-dev
           BOT_NAME: devbot-quality
           BOT_INSTANCE_ID: quality-monitor
@@ -63,8 +70,8 @@ resourceTemplates:
 - `GCP_PROJECT_ID` - Same as framework-config
 - `GCP_REGION: global`
 - `VERTEX_ALLOWED_MODELS` - Same as other instances
-- `IMAGE_TAG` - Commit SHA from merged PR
 - `ref` - Same commit SHA
+- `IMAGE_DIGEST` - do not set manually; auto-resolved by app-interface at deploy time (see Prerequisites)
 
 **Optional:**
 - `SLACK_WEBHOOK_URL` - For notifications (recommended)
@@ -197,7 +204,7 @@ oc get events --field-selector involvedObject.name=devbot-quality
 ```
 
 **Common issues:**
-- Wrong `IMAGE_TAG` - verify SHA matches Quay
+- Wrong `IMAGE_DIGEST` - verify the resolved digest matches Quay for the target `ref`'s commit (check the `openshift-saas-deploy` job output, not the saas file — value isn't set there)
 - Missing secrets - verify `devbot-secrets` exists
 - Network policy blocking - check `devbot-quality-egress`
 
@@ -277,7 +284,7 @@ To update configuration after deployment:
 1. **Update instance files** - Edit `instance/quality-monitor/` files
 2. **Commit to main** - PR and merge
 3. **Wait for Konflux** - New image built
-4. **Update app-interface** - Change `IMAGE_TAG` and `ref` to new SHA
+4. **Update app-interface** - Change `ref` to the new commit SHA (`IMAGE_DIGEST` re-resolves automatically)
 5. **Verify** - Wait for next scheduled run
 
 **For urgent config changes:**
