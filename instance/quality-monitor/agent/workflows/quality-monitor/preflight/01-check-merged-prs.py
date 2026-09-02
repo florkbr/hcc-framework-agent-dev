@@ -17,6 +17,7 @@ from common import (
     get_tasks,
 )
 from lib.config import load_config
+from lib.security_scans import is_security_scan
 
 # Configure logging
 logging.basicConfig(
@@ -123,7 +124,7 @@ def check_pr_violations(
         data = json.loads(result.stdout)
         rollup = data.get("statusCheckRollup", [])
 
-        failed_checks = [
+        all_failed = [
             {
                 "name": check.get("name"),
                 "conclusion": check.get("conclusion"),
@@ -133,12 +134,23 @@ def check_pr_violations(
             if check.get("conclusion") == "FAILURE"
         ]
 
+        failed_checks = [c for c in all_failed if not is_security_scan(c.get("name"))]
+        security_scans = [c for c in all_failed if is_security_scan(c.get("name"))]
+
         if failed_checks:
-            metadata = extract_pr_metadata(pr_data)
-            return {
-                **metadata,
+            result = {
+                **extract_pr_metadata(pr_data),
                 "failed_checks": failed_checks,
             }
+            if security_scans:
+                result["excluded_security_scans"] = security_scans
+            return result
+
+        if security_scans:
+            logger.info(
+                f"PR {org_repo}#{pr_number}: only security scan failures "
+                f"({', '.join(c['name'] for c in security_scans)}), skipping"
+            )
 
         return None
 

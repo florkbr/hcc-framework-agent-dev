@@ -255,6 +255,117 @@ class TestCheckPrViolations:
         assert "merged_at" in result
 
 
+class TestSecurityScanFiltering:
+    """Tests for security scan exclusion in check_pr_violations."""
+
+    def test_security_scan_excluded_from_violations(self, sample_pr_data):
+        """Security scan failures should not appear in failed_checks."""
+        spec.loader.exec_module(check_module)
+
+        status_checks = {
+            "statusCheckRollup": [
+                {"name": "ci/test", "conclusion": "FAILURE", "detailsUrl": "url1"},
+                {"name": "clair-scan", "conclusion": "FAILURE", "detailsUrl": "url2"},
+            ]
+        }
+
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = json.dumps(status_checks)
+
+        with patch("subprocess.run", return_value=mock_result):
+            result = check_module.check_pr_violations(
+                "RedHatInsights/test-repo", 123, sample_pr_data
+            )
+
+        assert result is not None
+        failed_names = {c["name"] for c in result["failed_checks"]}
+        assert "ci/test" in failed_names
+        assert "clair-scan" not in failed_names
+        assert len(result["excluded_security_scans"]) == 1
+        assert result["excluded_security_scans"][0]["name"] == "clair-scan"
+
+    def test_only_security_scan_failures_no_violation(self, sample_pr_data):
+        """When only security scans fail, no violation should be reported."""
+        spec.loader.exec_module(check_module)
+
+        status_checks = {
+            "statusCheckRollup": [
+                {"name": "clair-scan", "conclusion": "FAILURE", "detailsUrl": "url1"},
+                {
+                    "name": "sast-snyk-check",
+                    "conclusion": "FAILURE",
+                    "detailsUrl": "url2",
+                },
+            ]
+        }
+
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = json.dumps(status_checks)
+
+        with patch("subprocess.run", return_value=mock_result):
+            result = check_module.check_pr_violations(
+                "RedHatInsights/test-repo", 123, sample_pr_data
+            )
+
+        assert result is None
+
+    def test_mixed_failures_only_ci_in_violation(self, sample_pr_data):
+        """Mix of CI and security scan failures should only include CI checks."""
+        spec.loader.exec_module(check_module)
+
+        status_checks = {
+            "statusCheckRollup": [
+                {"name": "ci/lint", "conclusion": "FAILURE", "detailsUrl": "url1"},
+                {"name": "ci/build", "conclusion": "FAILURE", "detailsUrl": "url2"},
+                {
+                    "name": "grype-vulnerability-scan",
+                    "conclusion": "FAILURE",
+                    "detailsUrl": "url3",
+                },
+                {"name": "trivy-scan", "conclusion": "FAILURE", "detailsUrl": "url4"},
+            ]
+        }
+
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = json.dumps(status_checks)
+
+        with patch("subprocess.run", return_value=mock_result):
+            result = check_module.check_pr_violations(
+                "RedHatInsights/test-repo", 123, sample_pr_data
+            )
+
+        assert result is not None
+        failed_names = {c["name"] for c in result["failed_checks"]}
+        assert failed_names == {"ci/lint", "ci/build"}
+        assert len(result["excluded_security_scans"]) == 2
+
+    def test_no_security_scans_unchanged(self, sample_pr_data):
+        """When no security scans are present, behavior is unchanged."""
+        spec.loader.exec_module(check_module)
+
+        status_checks = {
+            "statusCheckRollup": [
+                {"name": "ci/lint", "conclusion": "FAILURE", "detailsUrl": "url1"},
+            ]
+        }
+
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = json.dumps(status_checks)
+
+        with patch("subprocess.run", return_value=mock_result):
+            result = check_module.check_pr_violations(
+                "RedHatInsights/test-repo", 123, sample_pr_data
+            )
+
+        assert result is not None
+        assert len(result["failed_checks"]) == 1
+        assert "excluded_security_scans" not in result
+
+
 class TestMainFunction:
     """Integration tests for main() function."""
 
